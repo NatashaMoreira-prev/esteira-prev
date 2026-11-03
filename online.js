@@ -3,6 +3,18 @@
 // pedido em pedidos/, que o trabalhador (o computador com a ponte ligada) executa.
 (() => {
 const CFG = window.VEIGA_CONFIG;
+if (!CFG || /^0{8}-/.test(CFG.clientId) || /^0{8}-/.test(CFG.tenantId)) {  // config.js ainda com o exemplo
+  window.veigaOnline = {
+    api: async () => { throw new Error("Sistema ainda não configurado."); },
+    async iniciar() {
+      document.getElementById("app").innerHTML = `<div class="card vazio"><h2>Quase pronto</h2>
+        <p>O site está no ar, mas o login com a conta @veiga.law ainda depende da liberação da TI.</p>
+        <p class="sub">Assim que a TI registrar o aplicativo, a esteira aparece aqui.</p></div>`;
+      return false;
+    },
+  };
+  return;
+}
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const ESCOPOS = ["Files.ReadWrite.All", "Sites.ReadWrite.All"];
 const TIPOS = { esocial: [".zip"], extratos: [".xlsx"], darf: [".pdf", ".xlsx"], cadastro: [".pdf", ".xlsx", ".docx"] };
