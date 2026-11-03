@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema Previdenciário · Veiga</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d2433; --quiet: #626b7a; --line: #e2e0d8;
+    --navy: #1f3557; --navy-soft: #e7ecf4;
+    --ok: #2e7d4f; --ok-soft: #e3f2e8; --warn: #a86a00; --warn-soft: #fbf0d9;
+    --bad: #b3261e; --bad-soft: #fbe4e2; --run: #2f5fb3; --run-soft: #e4ecfa; --idle: #b9bcc4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+  header { background: var(--navy); color: #fff; padding: 12px 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: .2px; }
+  header nav { display: flex; gap: 4px; margin-left: 12px; }
+  header nav button { background: transparent; color: #cfd8e8; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+  header nav button.ativo, header nav button:hover { background: rgba(255,255,255,.12); color: #fff; }
+  header .eu { margin-left: auto; display: flex; gap: 8px; align-items: center; font-size: 13px; color: #cfd8e8; }
+  header .eu input { width: 140px; padding: 5px 8px; border-radius: 6px; border: 0; font: inherit; }
+  .demo { background: var(--warn-soft); color: var(--warn); font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 99px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  h3 { font-size: 15px; margin: 0 0 12px; }
+  .sub { color: var(--quiet); margin: 0 0 20px; }
+  .card { overflow-x: auto; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .linha { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: minmax(0,1fr); } .grade { grid-template-columns: 36px repeat(12, minmax(0,1fr)); font-size: 9px; } header .eu { margin-left: 0; } }
+  button.btn { background: var(--navy); color: #fff; border: 0; border-radius: 7px; padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+  button.btn.sec { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+  button.btn.perigo { background: #fff; color: var(--bad); border: 1px solid var(--bad); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  button.link { background: none; border: 0; color: var(--run); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+  input, select, textarea { font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--quiet); }
+  .form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  table { width: 100%; border-collapse: collapse; }
+  td { overflow-wrap: anywhere; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 12px; color: var(--quiet); font-weight: 600; }
+  tr.clicavel { cursor: pointer; } tr.clicavel:hover td { background: #faf9f6; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .s-ok, .s-aprovado { background: var(--ok-soft); color: var(--ok); }
+  .s-erro, .s-devolvido { background: var(--bad-soft); color: var(--bad); }
+  .s-aguardando_revisao { background: var(--warn-soft); color: var(--warn); }
+  .s-na_fila, .s-rodando, .s-em_andamento { background: var(--run-soft); color: var(--run); }
+  .s-pendente { background: #f0efea; color: var(--quiet); }
+  .trilha { display: flex; gap: 3px; }
+  .trilha i { width: 22px; height: 8px; border-radius: 4px; background: var(--idle); opacity: .45; }
+  .trilha i.ok, .trilha i.aprovado { background: var(--ok); opacity: 1; }
+  .trilha i.erro, .trilha i.devolvido { background: var(--bad); opacity: 1; }
+  .trilha i.aguardando_revisao { background: var(--warn); opacity: 1; }
+  .trilha i.na_fila, .trilha i.rodando, .trilha i.em_andamento { background: var(--run); opacity: 1; }
+  .etapas { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .etapa { border: 1px solid var(--line); border-radius: 9px; padding: 12px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+  .etapa.foco { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy-soft); }
+  .etapa .topo { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .etapa .nome { font-weight: 600; }
+  .etapa .det { color: var(--quiet); font-size: 12.5px; }
+  .etapa textarea { width: 100%; min-height: 54px; resize: vertical; }
+  .grade { display: grid; grid-template-columns: 52px repeat(12, 1fr); gap: 3px; font-size: 11px; }
+  .grade .ano { color: var(--quiet); font-weight: 600; align-self: center; }
+  .grade .mes { height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; }
+  .m-ok { background: var(--ok); } .m-aviso { background: var(--warn); } .m-falta { background: var(--bad); } .m-fora { background: #eceae3; color: var(--quiet) !important; }
+  .legenda { display: flex; gap: 14px; font-size: 12px; color: var(--quiet); margin-top: 8px; flex-wrap: wrap; }
+  .legenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+  ul.lista { margin: 6px 0 0; padding-left: 18px; } ul.lista li { margin: 3px 0; }
+  .bloq { color: var(--bad); } .aviso { color: var(--warn); }
+  .drop { border: 1.5px dashed var(--idle); border-radius: 9px; padding: 18px; text-align: center; color: var(--quiet); }
+  .drop.sobre { border-color: var(--navy); background: var(--navy-soft); }
+  .mov { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; font-size: 13px; }
+  .mov .q { color: var(--quiet); font-size: 12px; }
+  .vazio { color: var(--quiet); text-align: center; padding: 28px; }
+  .toast { position: fixed; right: 16px; bottom: 16px; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 8px; max-width: 380px; display: none; }
+  .toast.erro { background: var(--bad); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .kpi b { display: block; font-size: 26px; }
+  .kpi span { color: var(--quiet); font-size: 12.5px; }
+  pre.log { background: #12161f; color: #d6deeb; padding: 12px; border-radius: 8px; max-height: 360px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sistema Previdenciário · Veiga</h1>
+  <span class="demo" id="demo" hidden>MODO DEMONSTRAÇÃO</span>
+  <span class="demo" id="parado" hidden title="Os pedidos ficam na fila e rodam quando o computador que processa ligar.">TRABALHADOR DESLIGADO</span>
+  <nav>
+    <button data-v="esteira" class="ativo">Esteira</button>
+    <button data-v="movimentos">Movimentos</button>
+    <button data-v="metricas">Métricas</button>
+  </nav>
+  <div class="eu">Você é <input id="eu" placeholder="seu nome"></div>
+</header>
+<main id="app"></main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
+<script src="config.js"></script>
+<script src="online.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ROTULO = { pendente: "Pendente", em_andamento: "Em andamento", na_fila: "Na fila", rodando: "Rodando", ok: "Concluída",
+  aguardando_revisao: "Aguardando revisão", aprovado: "Aprovada", devolvido: "Devolvida", erro: "Erro" };
+const pill = s => `<span class="pill s-${s}">${ROTULO[s] || s}</span>`;
+const dataBR = iso => iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
+const tam = b => b > 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1e3)) + " KB";
+let ETAPAS = [], estado = { v: "esteira", cid: null }, timer = null;
+
+function eu() { return $("#eu").value.trim(); }
+try { $("#eu").value = localStorage.getItem("veiga-eu") || ""; } catch (e) {}
+$("#eu").addEventListener("change", () => { try { localStorage.setItem("veiga-eu", eu()); } catch (e) {} });
+
+function toast(msg, erro) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast" + (erro ? " erro" : ""); t.style.display = "block";
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 4500);
+}
+async function api(url, opts = {}) {
+  if (window.veigaOnline) return window.veigaOnline.api(url, opts);  // versão online (web/online.js)
+  const r = await fetch(url, opts);
+  const corpo = r.headers.get("content-type")?.includes("json") ? await r.json() : null;
+  if (!r.ok) {
+    const d = corpo?.detail;
+    throw new Error(Array.isArray(d) ? d.map(x => x.msg.replace("Value error, ", "")).join(" ") : (d || `Erro ${r.status}`));
+  }
+  return corpo;
+}
+const post = (url, body) => api(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+document.querySelectorAll("header nav button").forEach(b => b.onclick = () => ir(b.dataset.v));
+function ir(v, cid = null) {
+  estado = { v, cid };
+  document.querySelectorAll("header nav button").forEach(b => b.classList.toggle("ativo", b.dataset.v === (v === "cliente" ? "esteira" : v)));
+  render();
+}
+async function render() {
+  clearTimeout(timer);
+  try {
+    if (estado.v === "esteira") await vEsteira();
+    else if (estado.v === "cliente") await vCliente(estado.cid);
+    else if (estado.v === "movimentos") await vMovimentos();
+    else await vMetricas();
+  } catch (e) { toast(e.message, true); }
+}
+
+// ------------------------------------------------------------ esteira
+async function vEsteira() {
+  const cs = await api("/api/clientes");
+  const ativos = cs.some(c => c.etapas.some(e => ["na_fila", "rodando"].includes(e.status)));
+  $("#app").innerHTML = `
+    <h2>Esteira de diagnósticos</h2>
+    <p class="sub">Cada linha é um cliente; cada traço, uma etapa da esteira.</p>
+    <details class="card" ${cs.length ? "" : "open"}>
+      <summary><b>Novo cliente</b></summary>
+      <form id="novo" class="form" style="margin-top:14px">
+        <label>Grupo<input name="grupo" placeholder="ex.: Grupo Hacbarth"></label>
+        <label>Empresa *<input name="nome" required></label>
+        <label>CNPJ *<input name="raiz_cnpj" required placeholder="00.000.000/0001-00"></label>
+        <label>Responsável<input name="responsavel"></label>
+        <label>Competência final *<input name="competencia_final" required placeholder="MM/AAAA"></label>
+        <button class="btn">Cadastrar</button>
+      </form>
+    </details>
+    <div class="card">
+      ${cs.length ? `<table>
+        <tr><th>Cliente</th><th>Responsável</th><th>Esteira</th><th>Onde está</th><th>Janela até</th></tr>
+        ${cs.map(c => `<tr class="clicavel" data-id="${c.id}">
+          <td><b>${esc(c.nome)}</b><br><span class="sub" style="font-size:12px">${esc(c.grupo || "")} · raiz ${esc(c.raiz_cnpj)}</span></td>
+          <td>${esc(c.responsavel || "—")}</td>
+          <td><div class="trilha" title="${ETAPAS.map((e, i) => e.nome + ": " + (ROTULO[c.etapas[i]?.status] || "")).join("\n")}">
+            ${c.etapas.map(e => `<i class="${e.status}"></i>`).join("")}</div></td>
+          <td>${esc(c.atual.nome)} ${c.atual.id === "concluido" ? pill("ok") : pill(c.atual.status)}</td>
+          <td>${esc(c.competencia_final)}</td></tr>`).join("")}
+      </table>` : `<div class="vazio">Nenhum cliente ainda. Cadastre o primeiro acima.</div>`}
+    </div>`;
+  $("#novo").onsubmit = async ev => {
+    ev.preventDefault();
+    const d = Object.fromEntries(new FormData(ev.target)); d.quem = eu();
+    try { const r = await post("/api/clientes", d); toast("Cliente cadastrado."); ir("cliente", r.id); }
+    catch (e) { toast(e.message, true); }
+  };
+  document.querySelectorAll("tr.clicavel").forEach(tr => tr.onclick = () => ir("cliente", +tr.dataset.id));
+  if (ativos) timer = setTimeout(render, 3000);
+}
+
+// ------------------------------------------------------------ cliente
+async function vCliente(cid) {
+  const c = await api(`/api/clientes/${cid}`);
+  const E = Object.fromEntries(c.etapas.map(e => [e.id, e]));
+  const foco = c.etapas.find(e => !["ok", "aprovado"].includes(e.status));
+  const ativos = c.etapas.some(e => ["na_fila", "rodando"].includes(e.status));
+  const entradas = c.arquivos.filter(a => a.tipo !== "saida");
+  const saidas = c.arquivos.filter(a => a.tipo === "saida");
+  const chk = E.checagem.detalhe;
+  $("#app").innerHTML = `
+    <p><button class="link" id="voltar">← Esteira</button></p>
+    <h2>${esc(c.nome)}</h2>
+    <p class="sub">${esc(c.grupo || "Sem grupo")} · raiz ${esc(c.raiz_cnpj)} · responsável ${esc(c.responsavel || "—")} · janela de 60 competências até ${esc(c.competencia_final)}</p>
+
+    <div class="card"><h3>Etapas</h3><div class="etapas">
+      ${c.etapas.map((e, i) => cartaoEtapa(e, foco && foco.id === e.id, c.etapas[i - 1])).join("")}
+    </div></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Arquivos de entrada</h3>
+        <div class="linha" style="margin-bottom:10px">
+          <select id="tipo"><option value="extratos">Extratos do MA (S-1010.xlsx, S-1200.xlsx...)</option><option value="esocial">ZIPs do eSocial</option><option value="darf">DARF (PDF e planilha)</option><option value="cadastro">Cadastro (Cartão CNPJ, CND)</option></select>
+          <input type="file" id="arqs" multiple hidden>
+          <button class="btn sec" id="escolher">Escolher arquivos</button>
+        </div>
+        <div class="drop" id="drop">Ou arraste os arquivos para cá</div>
+        ${entradas.length ? ["extratos", "esocial", "darf", "cadastro"].map(t => {
+            const lst = entradas.filter(a => a.tipo === t); if (!lst.length) return "";
+            const total = lst.reduce((s, a) => s + a.tamanho, 0);
+            return `<details style="margin-top:12px"><summary><b>${{ extratos: "Extratos do MA", esocial: "ZIPs do eSocial", darf: "DARF", cadastro: "Cadastro" }[t]}</b>: ${lst.length} arquivo(s), ${tam(total)}</summary>
+              <div style="max-height:260px;overflow:auto"><table>${lst.map(a => `<tr><td>${esc(a.nome)}</td><td style="white-space:nowrap">${tam(a.tamanho)}</td>
+              <td><button class="link" data-del="${a.id}">remover</button></td></tr>`).join("")}</table></div></details>`;
+          }).join("") : `<p class="sub" style="margin-top:12px">Nenhum arquivo enviado.</p>`}
+        ${E.upload.status !== "em_andamento" && entradas.length ? `<p class="sub" style="margin-top:10px">Mandou arquivo novo depois de concluir o upload? Rode a checagem de novo.</p>` : ""}
+      </div>
+      <div class="card">
+        <h3>Arquivos gerados</h3>
+        ${saidas.length ? `<table>${saidas.map(a => `<tr><td>${esc(ETAPAS.find(x => x.id === a.etapa)?.nome || a.etapa)}</td>
+          <td><a href="${a.url ? esc(a.url) : "/api/arquivos/" + a.id}" ${a.url ? 'target="_blank"' : ""}>${esc(a.nome)}</a></td><td>${tam(a.tamanho)}</td></tr>`).join("")}</table>`
+          : `<p class="sub">Os arquivos do motor, do WP e do deck aparecem aqui.</p>`}
+      </div>
+    </div>
+
+    ${chk ? blocoChecagem(chk) : ""}
+
+    <div class="grid2">
+      <div class="card"><h3>Movimentos</h3><div class="mov">
+        ${c.movimentos.map(m => `<div class="q">${dataBR(m.quando)}<br>${esc(m.quem || "")}</div>
+          <div><b>${esc(m.acao)}</b>${m.etapa ? " · " + esc(ETAPAS.find(x => x.id === m.etapa)?.nome || m.etapa) : ""}${m.nota ? `<br><span class="sub">${esc(m.nota)}</span>` : ""}</div>`).join("")}
+      </div></div>
+      <div class="card"><h3>Execuções</h3>
+        ${c.jobs.length ? `<table>${c.jobs.map(j => `<tr><td>${esc(ETAPAS.find(x => x.id === j.etapa)?.nome)}</td><td>${pill(j.status)}</td>
+          <td>${dataBR(j.criado_em)}</td><td>${j.terminado_em ? `<button class="link" data-log="${j.id}">log</button>` : ""}</td></tr>`).join("")}</table>`
+          : `<p class="sub">Nenhuma etapa rodou ainda.</p>`}
+        <div id="log"></div>
+      </div>
+    </div>`;
+
+  $("#voltar").onclick = () => ir("esteira");
+  const enviar = async files => {
+    if (!files.length) return;
+    const fd = new FormData(); fd.append("tipo", $("#tipo").value); fd.append("quem", eu());
+    [...files].forEach(f => fd.append("arquivos", f));
+    toast(`Enviando ${files.length} arquivo(s)...`);
+    try {
+      const r = await api(`/api/clientes/${cid}/arquivos`, { method: "POST", body: fd });
+      toast(`${r.aceitos.length} enviado(s)` + (r.recusados.length ? `; recusados (extensão errada): ${r.recusados.join(", ")}` : ""), r.recusados.length > 0);
+      render();
+    } catch (e) { toast(e.message, true); }
+  };
+  $("#escolher").onclick = () => $("#arqs").click();
+  $("#arqs").onchange = e => enviar(e.target.files);
+  const drop = $("#drop");
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("sobre"); };
+  drop.ondragleave = () => drop.classList.remove("sobre");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("sobre"); enviar(e.dataTransfer.files); };
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    try { await api(`/api/arquivos/${b.dataset.del}?quem=${encodeURIComponent(eu())}`, { method: "DELETE" }); render(); }
+    catch (e) { toast(e.message, true); }
+  });
+  document.querySelectorAll("[data-log]").forEach(b => b.onclick = async () => {
+    const r = await api(`/api/jobs/${b.dataset.log}/log`);
+    $("#log").innerHTML = `<pre class="log">${esc(r.log || "(sem log)")}</pre>`;
+  });
+  document.querySelectorAll("[data-acao]").forEach(b => b.onclick = async () => {
+    const [acao, etapa] = b.dataset.acao.split(":");
+    const nota = document.querySelector(`#nota-${etapa}`)?.value || null;
+    const url = acao === "concluir" ? `/api/clientes/${cid}/upload/concluir`
+      : acao === "reabrir" ? `/api/clientes/${cid}/upload/reabrir`
+      : `/api/clientes/${cid}/etapas/${etapa}/${acao}`;
+    if (["aprovar", "devolver"].includes(acao) && !eu()) return toast("Preencha 'Você é' no topo antes de revisar.", true);
+    try { await post(url, { quem: eu(), nota }); render(); } catch (e) { toast(e.message, true); }
+  });
+  if (ativos) timer = setTimeout(render, 2500);
+}
+
+function cartaoEtapa(e, foco, ant) {
+  const liberada = ant && ["ok", "aprovado"].includes(ant.status);
+  const d = e.detalhe || {};
+  let corpo = "", acoes = "";
+  if (e.id === "upload") {
+    if (e.status === "em_andamento") acoes = `<button class="btn" data-acao="concluir:upload">Concluir upload</button>`;
+    else acoes = `<button class="btn sec" data-acao="reabrir:upload">Reabrir upload</button>`;
+    if (d.arquivos) corpo = `${d.arquivos} arquivo(s) no envio`;
+  } else if (e.tipo === "auto") {
+    if (d.detalhe) corpo = esc(d.detalhe) + (d.segundos != null ? ` · ${d.segundos}s` : "");
+    if (d.demo) corpo += `<br><b style="color:var(--warn)">Saída de demonstração</b>`;
+    if (d.pendencias?.length && e.status === "ok") corpo += `<details style="margin-top:6px"><summary>${d.pendencias.length} pendência(s) para a revisão</summary><ul class="lista">${d.pendencias.map(p => `<li>${esc(p)}</li>`).join("")}</ul></details>`;
+    if (["devolvido"].includes(e.status) && d.nota) corpo = `Devolvida por ${esc(d.quem)}: ${esc(d.nota)}`;
+    if (!["na_fila", "rodando"].includes(e.status) && liberada)
+      acoes = `<button class="btn ${e.status === "ok" ? "sec" : ""}" data-acao="rodar:${e.id}">${e.status === "pendente" ? "Rodar" : "Rodar de novo"}</button>`;
+  } else if (e.tipo === "revisao") {
+    if (e.status === "aguardando_revisao") {
+      corpo = `<textarea id="nota-${e.id}" placeholder="Decisões, observações ou o que corrigir"></textarea>`;
+      acoes = `<button class="btn" data-acao="aprovar:${e.id}">Aprovar</button> <button class="btn perigo" data-acao="devolver:${e.id}">Devolver</button>`;
+    } else if (e.status === "aprovado") corpo = `Aprovada por ${esc(d.quem)}${d.nota ? ": " + esc(d.nota) : ""}`;
+  }
+  return `<div class="etapa ${foco ? "foco" : ""}">
+    <div class="topo"><span class="nome">${esc(e.nome)}</span>${pill(e.status)}</div>
+    ${corpo ? `<div class="det">${corpo}</div>` : ""}
+    ${acoes ? `<div class="linha">${acoes}</div>` : ""}
+    ${e.atualizado_em ? `<div class="det" style="font-size:11.5px">${dataBR(e.atualizado_em)}</div>` : ""}
+  </div>`;
+}
+
+function blocoChecagem(chk) {
+  const r = chk.resumo || {};
+  const porAno = {};
+  (chk.grade || []).forEach(g => { const [a, m] = g.competencia.split("-"); (porAno[a] ||= {})[+m] = g; });
+  const cel = g => {
+    if (!g) return `<div class="mes m-fora"></div>`;
+    const cls = !g.pacote ? "m-falta" : (g["S-1200"] === 0 || g["S-5011"] === 0 || !g.darf) ? "m-aviso" : "m-ok";
+    const tip = `${g.competencia}\nPacote: ${g.pacote ? "sim" : "não"}\nS-1200: ${g["S-1200"]}  S-2299: ${g["S-2299"]}  S-5011: ${g["S-5011"]}\nDARF: ${g.darf ? "sim" : "não"}`;
+    return `<div class="mes ${cls}" title="${esc(tip)}">${g.pacote ? g["S-1200"] : ""}</div>`;
+  };
+  return `<div class="card"><h3>Checagem de completude</h3>
+    <p style="margin-top:-6px">${esc(chk.detalhe)} Janela ${esc(r.janela)}: ${r.competencias_com_pacote} de ${r.competencias_janela} competências com pacote;
+      ${r.zips_esocial} ZIP(s), ${r.pdfs_darf} PDF(s) de DARF.</p>
+    ${chk.bloqueios?.length ? `<ul class="lista bloq">${chk.bloqueios.map(b => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+    ${chk.avisos?.length ? `<ul class="lista aviso">${chk.avisos.map(b => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+    <div class="grade" style="margin-top:14px">
+      <div></div>${["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"].map(m => `<div class="sub" style="text-align:center;margin:0">${m}</div>`).join("")}
+      ${Object.keys(porAno).sort().map(a => `<div class="ano">${a}</div>${Array.from({ length: 12 }, (_, i) => cel(porAno[a][i + 1])).join("")}`).join("")}
+    </div>
+    <div class="legenda"><span style="--c:var(--ok)">completa</span><span style="--c:var(--warn)">sem S-1200, S-5011 ou DARF</span>
+      <span style="--c:var(--bad)">sem pacote de Eventos</span><span style="--c:#eceae3">fora da janela</span><span>número = linhas/eventos de S-1200</span></div>
+    ${r.eventos ? `<p class="sub" style="margin-top:12px;margin-bottom:0">Eventos lidos: ${Object.entries(r.eventos).map(([k, v]) => `${esc(k)} ${v}`).join(" · ")}</p>` : ""}
+  </div>`;
+}
+
+// ------------------------------------------------------------ movimentos e métricas
+async function vMovimentos() {
+  const ms = await api("/api/movimentos?limite=200");
+  $("#app").innerHTML = `<h2>Movimentos</h2><p class="sub">Tudo o que aconteceu na esteira, do mais recente para o mais antigo.</p>
+    <div class="card">${ms.length ? `<table><tr><th>Quando</th><th>Cliente</th><th>Etapa</th><th>O quê</th><th>Quem</th></tr>
+      ${ms.map(m => `<tr class="clicavel" data-id="${m.cliente_id}"><td>${dataBR(m.quando)}</td><td>${esc(m.cliente)}</td>
+        <td>${esc(ETAPAS.find(x => x.id === m.etapa)?.nome || "")}</td><td><b>${esc(m.acao)}</b>${m.nota ? `<br><span class="sub">${esc(m.nota)}</span>` : ""}</td>
+        <td>${esc(m.quem)}</td></tr>`).join("")}</table>` : `<div class="vazio">Nada por aqui ainda.</div>`}</div>`;
+  document.querySelectorAll("tr.clicavel").forEach(tr => tr.onclick = () => ir("cliente", +tr.dataset.id));
+}
+async function vMetricas() {
+  const m = await api("/api/metricas");
+  const rev = m.revisoes_pendentes.reduce((s, r) => s + r.aguardando, 0);
+  $("#app").innerHTML = `<h2>Métricas</h2><p class="sub">O consultivo está entregando?</p>
+    <div class="kpis">
+      <div class="kpi"><b>${m.clientes}</b><span>clientes na esteira</span></div>
+      <div class="kpi"><b>${m.por_fase["Concluído"] || 0}</b><span>diagnósticos concluídos</span></div>
+      <div class="kpi"><b>${rev}</b><span>revisões esperando alguém</span></div>
+      <div class="kpi"><b>${m.fila}</b><span>etapas na fila agora</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Onde estão os clientes</h3><table><tr><th>Etapa atual</th><th>Clientes</th></tr>
+        ${Object.entries(m.por_fase).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join("") || `<tr><td colspan="2" class="sub">Sem clientes.</td></tr>`}</table></div>
+      <div class="card"><h3>Etapas automáticas</h3><table><tr><th>Etapa</th><th>Execuções</th><th>Erros</th><th>Tempo médio</th></tr>
+        ${m.tempos.map(t => `<tr><td>${esc(ETAPAS.find(x => x.id === t.etapa)?.nome)}</td><td>${t.execucoes}</td><td>${t.erros}</td><td>${t.segundos_medio}s</td></tr>`).join("") || `<tr><td colspan="4" class="sub">Nenhuma execução ainda.</td></tr>`}</table></div>
+    </div>`;
+}
+
+(async () => {
+  try { if (window.veigaOnline && !(await window.veigaOnline.iniciar())) return; } catch (e) { return toast(e.message, true); }
+  try { const r = await api("/api/etapas"); ETAPAS = r.etapas; $("#demo").hidden = !r.demo; } catch (e) { toast(e.message, true); }
+  render();
+})();
+</script>
+</body>
+</html>
